@@ -44,3 +44,5 @@ A Python tool for cleaning FiveM and Windows artifacts commonly associated with 
 - Registry keys (CitizenFX, Valve, INextUUID, xbgm, …)  Delete
 - Scheduled tasks (XblGameSaveTask, XblGameSaveTaskLogon)  Disable
 - GameDVR policy                             Disable
+
+## Please leave a ⭐ if you like it
