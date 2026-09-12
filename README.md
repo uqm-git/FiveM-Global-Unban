@@ -1,6 +1,8 @@
 # 🧹 UNBAN — FiveM Spoofer
 
 A Python tool for cleaning FiveM and Windows artifacts commonly associated with hardware/account bans. It removes caches, logs, registry entries, Xbox services, and resets GameDVR policies.
+In order to get unbaned, you have to login into a new Rockstar Account.
+
 
 > ⚠️ **Disclaimer:** This tool is intended for educational and research purposes only. Using it may violate the Terms of Service of FiveM, Rockstar Games, and Microsoft. Use at your own risk.
 >
