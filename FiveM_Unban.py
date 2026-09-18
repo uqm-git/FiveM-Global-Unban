@@ -1,160 +1,551 @@
+import ctypes
 import os
+import re
 import shutil
 import subprocess
 import sys
-import ctypes
-             
-os.system("")
+import time
+from datetime import datetime
 
-RED = "\033[91m"
-RESET = "\033[0m"
+if os.name == "nt":
+    os.system("")
 
-BANNER = r"""
-                                     █    ██  ███▄    █  ▄▄▄▄    ▄▄▄       ███▄    █ 
-                                     ██  ▓██▒ ██ ▀█   █ ▓█████▄ ▒████▄     ██ ▀█   █ 
-                                    ▓██  ▒██░▓██  ▀█ ██▒▒██▒ ▄██▒██  ▀█▄  ▓██  ▀█ ██▒
-                                    ▓▓█  ░██░▓██▒  ▐▌██▒▒██░█▀  ░██▄▄▄▄██ ▓██▒  ▐▌██▒
-                                    ▒▒█████▓ ▒██░   ▓██░░▓█  ▀█▓ ▓█   ▓██▒▒██░   ▓██░
-                                    ░▒▓▒ ▒ ▒ ░ ▒░   ▒ ▒ ░▒▓███▀▒ ▒▒   ▓▒█░░ ▒░   ▒ ▒ 
-                                    ░░▒░ ░ ░ ░ ░░   ░ ▒░▒░▒   ░   ▒   ▒▒ ░░ ░░   ░ ▒░
-                                     ░░░ ░ ░    ░   ░ ░  ░    ░   ░   ▒      ░   ░ ░ 
-                                       ░              ░  ░            ░  ░         ░ 
-                                                              ░
-"""
 
-def log(msg):
-    print(f"[{RED}-{RESET}] {msg}")
+class C:
+    RESET   = "\033[0m"
+    BOLD    = "\033[1m"
+    DIM     = "\033[2m"
+    RED     = "\033[91m"
+    GREEN   = "\033[92m"
+    YELLOW  = "\033[93m"
+    BLUE    = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN    = "\033[96m"
+    WHITE   = "\033[97m"
+    GRAY    = "\033[90m"
+
+    TEAL     = "\033[38;5;43m"
+    TEAL_LT  = "\033[38;5;80m"
+    MINT     = "\033[38;5;121m"
+    LIME     = "\033[38;5;155m"
+    AMBER    = "\033[38;5;214m"
+    CORAL    = "\033[38;5;203m"
+    ROSE     = "\033[38;5;211m"
+    INDIGO   = "\033[38;5;105m"
+    SKY      = "\033[38;5;117m"
+    STEEL    = "\033[38;5;67m"
+    SLATE    = "\033[38;5;60m"
+    COAL     = "\033[38;5;236m"
+
+    HIDE = "\033[?25l"
+    SHOW = "\033[?25h"
+
+
+SYM_DOT   = "•"
+SYM_OK    = "✓"
+SYM_FAIL  = "✗"
+SYM_ARROW = "›"
+SYM_BOLT  = "⌁"
+SYM_LOCK  = "⚿"
+SYM_WARN  = "⚠"
+
+GITHUB = "github.com/uqm-git"
+
+DOTS = ["·  ", "·· ", "···", " ··", "  ·", "   "]
+
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[a-zA-Z]")
+
+
+def vlen(s):
+    return len(ANSI_RE.sub("", s))
+
+
+def pad(s, width):
+    return s + " " * max(0, width - vlen(s))
+
+
+def term_width():
+    try:
+        w = shutil.get_terminal_size().columns
+    except Exception:
+        w = 80
+    return max(80, min(w - 2, 120))
+
+
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def hide():
+    sys.stdout.write(C.HIDE)
+    sys.stdout.flush()
+
+
+def show():
+    sys.stdout.write(C.SHOW)
+    sys.stdout.flush()
+
+
+def typewriter(text, color=C.SKY, delay=0.008, prefix="  "):
+    hide()
+    sys.stdout.write(prefix)
+    for ch in text:
+        sys.stdout.write(C.BOLD + color + ch + C.RESET)
+        sys.stdout.flush()
+        time.sleep(delay)
+    sys.stdout.write("\n")
+    show()
+
+
+def marquee(text, color=C.TEAL_LT, duration=1.0):
+    w = term_width() - 6
+    padded = "  " + text + "  " * 6
+    end = time.time() + duration
+    i = 0
+    hide()
+    while time.time() < end:
+        segment = (padded * 3)[i:i + w]
+        sys.stdout.write(f"\r  {C.BOLD}{color}{segment}{C.RESET}")
+        sys.stdout.flush()
+        time.sleep(0.04)
+        i += 1
+    sys.stdout.write("\r" + " " * (w + 6) + "\r")
+    show()
+
+
+LOGO = [
+    "  ███████╗██╗██╗   ██╗███████╗███╗   ███╗",
+    "  ██╔════╝██║██║   ██║██╔════╝████╗ ████║",
+    "  █████╗  ██║██║   ██║█████╗  ██╔████╔██║",
+    "  ██╔══╝  ██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║",
+    "  ██║     ██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║",
+    "  ╚═╝     ╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝",
+    "          C L E A N E R   ·   v 3",
+]
+
+LOGO_COLORS = [C.STEEL, C.SKY, C.TEAL_LT, C.MINT,
+               C.TEAL_LT, C.SKY, C.AMBER]
+
+
+def animate_logo():
+    for i, line in enumerate(LOGO):
+        col = LOGO_COLORS[i % len(LOGO_COLORS)]
+        print("  " + C.BOLD + col + line + C.RESET)
+        time.sleep(0.05)
+
+
+def boot():
+    w = term_width()
+    clear()
+    print()
+
+
+    print("  " + C.COAL + "─" * (w - 4) + C.RESET)
+    print()
+
+    animate_logo()
+
+    print()
+    marquee(f"{SYM_BOLT}  N E O N  ·  D A S H B O A R D  ·  E D I T I O N  {SYM_BOLT}",
+            C.TEAL_LT, duration=0.9)
+
+    print()
+    print("  " + C.COAL + "─" * (w - 4) + C.RESET)
+    time.sleep(0.1)
+    print()
+
 
 def is_admin():
     try:
-        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
     except Exception:
         return False
 
+
+def require_admin():
+    if not is_admin():
+        w = term_width()
+        print()
+        print(C.CORAL + "  ┌" + "─" * (w - 4) + "┐" + C.RESET)
+        print(C.CORAL + "  │ " + C.BOLD + C.CORAL
+              + f"{SYM_LOCK}  ADMIN PRIVILEGES REQUIRED"
+              + C.RESET
+              + " " * (w - 34)
+              + C.CORAL + "│" + C.RESET)
+        print(C.CORAL + "  │ " + C.WHITE
+              + "Restart this tool as Administrator."
+              + C.RESET
+              + " " * (w - 42)
+              + C.CORAL + "│" + C.RESET)
+        print(C.CORAL + "  └" + "─" * (w - 4) + "┘" + C.RESET)
+        print()
+        input(f"  {C.GRAY}ENTER to exit…{C.RESET}")
+        sys.exit(1)
+
+
 def run(cmd):
-    subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.run(cmd, shell=True,
+                          stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL).returncode
 
-def clean_fivem():
-    local_app_data = os.environ.get("LocalAppData", "")
-    fivem_app_data = os.path.join(local_app_data, "FiveM", "FiveM.app")
-    digital_entitlements = os.path.join(local_app_data, "DigitalEntitlements")
 
-    data_folder = os.path.join(fivem_app_data, "data")
-    if os.path.exists(data_folder):
-        log(f"Deleting {data_folder}...")
-        shutil.rmtree(data_folder, ignore_errors=True)
-    else:
-        log(f"Folder {data_folder} does not exist.")
+def status_lines(inner_w):
+    local = os.environ.get("LocalAppData", "")
+    fivem = os.path.join(local, "FiveM", "FiveM.app")
+    ent = os.path.join(local, "DigitalEntitlements")
+    fivem_ok = os.path.exists(fivem)
+    ent_ok = os.path.exists(ent)
 
-    if os.path.exists(digital_entitlements):
-        log(f"Cleaning contents of {digital_entitlements}...")
-        for entry in os.listdir(digital_entitlements):
-            path = os.path.join(digital_entitlements, entry)
+    try:
+        total, used, free = shutil.disk_usage("C:\\")
+        free_gb = free / (1024 ** 3)
+        total_gb = total / (1024 ** 3)
+        pct = int(used / total * 100)
+        bar_w = max(10, inner_w - 8)
+        filled = int(pct / 100 * bar_w)
+        disk_bar = "█" * filled + "░" * (bar_w - filled)
+    except Exception:
+        free_gb, total_gb, pct, disk_bar = 0, 0, 0, "░" * 18
+
+    user = os.environ.get("USERNAME", "?")
+
+    rows = [
+        f"{C.SLATE}SYSTEM{C.RESET}",
+        f"{C.TEAL_LT}{SYM_DOT}{C.RESET} "
+        f"{C.SLATE}User  {C.RESET}{C.WHITE}{user}{C.RESET}",
+        "",
+        f"{C.SLATE}DISK  C:{C.RESET}",
+        f"{C.SKY}{disk_bar}{C.RESET}  {C.WHITE}{pct}%{C.RESET}",
+        f"{C.GRAY}{free_gb:0.1f} / {total_gb:0.1f} GB free{C.RESET}",
+        "",
+        f"{C.SLATE}FIVEM{C.RESET}",
+        (f"{C.MINT}{SYM_OK}{C.RESET} app_data"
+         if fivem_ok else f"{C.GRAY}○{C.RESET} app_data"),
+        (f"{C.MINT}{SYM_OK}{C.RESET} entitlements"
+         if ent_ok else f"{C.GRAY}○{C.RESET} entitlements"),
+    ]
+    return rows
+
+
+def dashboard():
+    clear()
+    w = term_width()
+
+    left_title = (f"{C.BOLD}{C.SKY}FIVEM Spoofer{C.RESET} "
+                  f"{C.SLATE}·{C.RESET} "
+                  f"{C.TEAL_LT}DASHBOARD{C.RESET}")
+    ts = datetime.now().strftime("%a %d.%m · %H:%M:%S")
+    head_visible = "FIVEM Spoofer · DASHBOARD"
+    space = (w - 4) - len(head_visible) - len(ts)
+    print()
+    print("  " + left_title + " " * max(1, space) + f"{C.GRAY}{ts}{C.RESET}")
+    print("  " + C.COAL + "─" * (w - 4) + C.RESET)
+    print()
+
+    total_w = w - 4
+    gap = 3
+    left_w = int(total_w * 0.58)
+    right_w = total_w - left_w - gap
+
+    menu_items = [
+        ("1", "Remove CFX Ban",
+         "does not remove hardware bans", C.CORAL),
+        ("2", "Exit",
+         "close the dashboard", C.SLATE),
+    ]
+
+    L = []
+    L.append(C.STEEL + "┌" + "─" * (left_w - 2) + "┐" + C.RESET)
+    title = " A C T I O N S "
+    rem = (left_w - 2) - len(title)
+    ll = rem // 2
+    lr = rem - ll
+    L.append(C.STEEL + "├" + "─" * ll + C.RESET
+             + C.BOLD + C.SKY + title + C.RESET
+             + C.STEEL + "─" * lr + "┤" + C.RESET)
+
+    for key, name, desc, col in menu_items:
+        badge = f"[{key}]"
+        inner = f"  {C.BOLD}{col}{badge}{C.RESET} {C.BOLD}{C.WHITE}{name}{C.RESET}"
+        L.append(C.STEEL + "│" + C.RESET + pad(inner, left_w - 2)
+                 + C.STEEL + "│" + C.RESET)
+        inner2 = f"       {C.GRAY}{desc}{C.RESET}"
+        L.append(C.STEEL + "│" + C.RESET + pad(inner2, left_w - 2)
+                 + C.STEEL + "│" + C.RESET)
+        L.append(C.STEEL + "│" + C.RESET
+                 + " " * (left_w - 2) + C.STEEL + "│" + C.RESET)
+
+    L.pop()
+    L.append(C.STEEL + "└" + "─" * (left_w - 2) + "┘" + C.RESET)
+
+    R = []
+    R.append(C.STEEL + "┌" + "─" * (right_w - 2) + "┐" + C.RESET)
+    title_r = " S T A T U S "
+    rem = (right_w - 2) - len(title_r)
+    rl = rem // 2
+    rr = rem - rl
+    R.append(C.STEEL + "├" + "─" * rl + C.RESET
+             + C.BOLD + C.TEAL_LT + title_r + C.RESET
+             + C.STEEL + "─" * rr + "┤" + C.RESET)
+
+    for line in status_lines(right_w - 2):
+        R.append(C.STEEL + "│" + C.RESET + pad(" " + line, right_w - 2)
+                 + C.STEEL + "│" + C.RESET)
+
+    while len(R) < len(L) - 1:
+        R.append(C.STEEL + "│" + C.RESET
+                 + " " * (right_w - 2) + C.STEEL + "│" + C.RESET)
+
+    R.append(C.STEEL + "└" + "─" * (right_w - 2) + "┘" + C.RESET)
+
+    rows = max(len(L), len(R))
+    L += [" " * left_w] * (rows - len(L))
+    R += [" " * right_w] * (rows - len(R))
+
+    for l, r in zip(L, R):
+        print("  " + pad(l, left_w) + " " * gap + r)
+
+    print()
+    print("  " + C.COAL + "─" * (w - 4) + C.RESET)
+    foot_left = f"{C.GRAY}⌥ {C.SKY}{GITHUB}{C.RESET}"
+    foot_right = f"{C.SLATE}v3.0 · neon{C.RESET}"
+    print("  " + pad(foot_left, (w - 4) - vlen(foot_right)) + foot_right)
+    print()
+
+
+class Task:
+    def __init__(self, name, fn, tag="clean"):
+        self.name = name
+        self.fn = fn
+        self.done = False
+        self.tag = tag
+
+
+def make_tasks():
+    local = os.environ.get("LocalAppData", "")
+    fivem = os.path.join(local, "FiveM", "FiveM.app")
+    ent = os.path.join(local, "DigitalEntitlements")
+
+    def rm_data():
+        p = os.path.join(fivem, "data")
+        if os.path.exists(p):
+            shutil.rmtree(p, ignore_errors=True)
+
+    def clean_ent():
+        if not os.path.exists(ent):
+            return
+        for e in os.listdir(ent):
+            p = os.path.join(ent, e)
             try:
-                if os.path.isdir(path):
-                    shutil.rmtree(path, ignore_errors=True)
+                if os.path.isdir(p):
+                    shutil.rmtree(p, ignore_errors=True)
                 else:
-                    os.remove(path)
+                    os.remove(p)
             except Exception:
                 pass
-    else:
-        log(f"Folder {digital_entitlements} does not exist.")
 
-    log("Taking ownership of the temp directory...")
-    run('takeown /A /R /D Y /F C:\\windows\\temp')
+    def dirs():
+        for d in [
+            os.path.join(local, "Microsoft", "Windows", "INetCache"),
+            os.path.join(fivem, "cache"),
+            os.path.join(fivem, "logs"),
+            os.path.join(fivem, "crashes"),
+        ]:
+            shutil.rmtree(d, ignore_errors=True)
 
-    if not os.path.exists("C:\\windows\\temp"):
-        log("Creating temp directory...")
-        os.makedirs("C:\\windows\\temp", exist_ok=True)
+    def takeown():
+        run(r"takeown /A /R /D Y /F C:\windows\temp")
+        os.makedirs(r"C:\windows\temp", exist_ok=True)
 
-    log("Deleting log files...")
-    log_patterns = [
-        ("C:\\windows\\logs\\cbs", "*.log"),
-        ("C:\\Windows\\Logs\\MoSetup", "*.log"),
-        ("C:\\Windows\\Panther", "*.log"),
-        ("C:\\Windows\\inf", "*.log"),
-        ("C:\\Windows\\logs", "*.log"),
-        ("C:\\Windows\\SoftwareDistribution", "*.log"),
-        ("C:\\Windows\\Microsoft.NET", "*.log"),
-        (os.path.join(local_app_data, "Microsoft", "Windows", "WebCache"), "*.log"),
-        (os.path.join(local_app_data, "Microsoft", "Windows", "SettingSync"), "*.log"),
-    ]
-    for folder, pattern in log_patterns:
-        if os.path.exists(folder):
+    def logs():
+        for folder in [
+            r"C:\windows\logs\cbs", r"C:\Windows\Logs\MoSetup",
+            r"C:\Windows\Panther", r"C:\Windows\inf",
+            r"C:\Windows\logs", r"C:\Windows\SoftwareDistribution",
+            r"C:\Windows\Microsoft.NET",
+            os.path.join(local, "Microsoft", "Windows", "WebCache"),
+            os.path.join(local, "Microsoft", "Windows", "SettingSync"),
+        ]:
+            if not os.path.exists(folder):
+                continue
             for root, _, files in os.walk(folder):
                 for f in files:
-                    if pattern == "*" or f.lower().endswith(pattern.replace("*", "")):
+                    if f.lower().endswith(".log"):
                         try:
                             os.remove(os.path.join(root, f))
                         except Exception:
                             pass
 
-    log("Removing directories...")
-    dirs_to_remove = [
-        os.path.join(local_app_data, "Microsoft", "Windows", "INetCache"),
-        os.path.join(fivem_app_data, "cache"),
-        os.path.join(local_app_data, "FiveM.app", "logs"),
-        os.path.join(local_app_data, "FiveM.app", "crashes"),
+    def stop():
+        for s in ["XblAuthManager", "XblGameSave",
+                  "XboxNetApiSvc", "XboxGipSvc"]:
+            run(f"sc stop {s}")
+
+    def delete():
+        for s in ["XblAuthManager", "XblGameSave",
+                  "XboxNetApiSvc", "XboxGipSvc"]:
+            run(f"sc delete {s}")
+
+    def reg():
+        for k in [
+            r"HKLM\SYSTEM\CurrentControlSet\Services\xbgm",
+            r"HKEY_LOCAL_MACHINE\SOFTWARE\INextUUID",
+            r"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+            r"HKEY_CURRENT_USER\SOFTWARE\CitizenFX",
+            r"HKEY_CURRENT_USER\SOFTWARE\Valve",
+            r"HKEY_CURRENT_USER\SOFTWARE\nk",
+        ]:
+            run(f'reg delete "{k}" /f')
+
+    def tasks_off():
+        run(r'schtasks /Change /TN "Microsoft\XblGameSave\XblGameSaveTask" /disable')
+        run(r'schtasks /Change /TN "Microsoft\XblGameSave\XblGameSaveTaskLogon" /disable')
+
+    def dvr():
+        run(r'reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" '
+            r'/v AllowGameDVR /t REG_DWORD /d 0 /f')
+
+    return [
+        Task("Purge FiveM data cache",       rm_data,   "fivem"),
+        Task("Clean DigitalEntitlements",    clean_ent, "fivem"),
+        Task("Remove stale directories",     dirs,      "fivem"),
+        Task("Take ownership of temp",       takeown,   "system"),
+        Task("Purge Windows log files",      logs,      "system"),
+        Task("Stop Xbox services",           stop,      "system"),
+        Task("Delete Xbox services",         delete,    "system"),
+        Task("Clean registry traces",        reg,       "system"),
+        Task("Disable Xbox scheduled tasks", tasks_off, "system"),
+        Task("Enforce GameDVR policy",       dvr,       "system"),
     ]
-    for d in dirs_to_remove:
-        shutil.rmtree(d, ignore_errors=True)
-
-    log("Stopping Xbox services...")
-    for svc in ["XblAuthManager", "XblGameSave", "XboxNetApiSvc", "XboxGipSvc"]:
-        run(f"sc stop {svc}")
-
-    log("Deleting Xbox services...")
-    for svc in ["XblAuthManager", "XblGameSave", "XboxNetApiSvc", "XboxGipSvc"]:
-        run(f"sc delete {svc}")
-
-    log("Cleaning the registry...")
-    reg_keys = [
-        r"HKLM\SYSTEM\CurrentControlSet\Services\xbgm",
-        r"HKEY_LOCAL_MACHINE\SOFTWARE\INextUUID",
-        r"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
-        r"HKEY_CURRENT_USER\SOFTWARE\CitizenFX",
-        r"HKEY_CURRENT_USER\SOFTWARE\Valve",
-        r"HKEY_CURRENT_USER\SOFTWARE\nk",
-    ]
-    for key in reg_keys:
-        run(f'reg delete "{key}" /f')
-
-    log("Disabling tasks...")
-    run('schtasks /Change /TN "Microsoft\\XblGameSave\\XblGameSaveTask" /disable')
-    run('schtasks /Change /TN "Microsoft\\XblGameSave\\XblGameSaveTaskLogon" /disable')
-
-    log("Setting GameDVR policy...")
-    run('reg add "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR" /v AllowGameDVR /t REG_DWORD /d 0 /f')
-
-    log("Cleanup complete!")
-    input("Press Enter to exit...")
 
 
-def menu():
-    while True:
-        os.system("cls")
-        print(f"{RED}{BANNER}{RESET}")
-        print("1. Clean FiveM")
-        print("2. Exit")
-        choice = input("Choose an option: ")
+def tag_color(tag):
+    return {"fivem": C.AMBER, "system": C.SKY}.get(tag, C.MINT)
 
-        if choice == "1":
-            log("Cleaning FiveM...")
-            clean_fivem()
-        elif choice == "2":
-            sys.exit(0)
-        else:
-            log("Invalid option. Please try again.")
-            input("Press Enter to continue...")
+
+def render_runner(tasks):
+    clear()
+    w = term_width()
+    print()
+    print(f"  {C.BOLD}{C.SKY}PIPELINE{C.RESET} "
+          f"{C.SLATE}·{C.RESET} "
+          f"{C.TEAL_LT}executing {len(tasks)} tasks{C.RESET}")
+    print("  " + C.COAL + "─" * (w - 4) + C.RESET)
+    print()
+
+    hide()
+    name_pad = 38
+
+    for i, t in enumerate(tasks):
+        col = tag_color(t.tag)
+        tag = f"[{t.tag}]"
+        t0 = time.monotonic()
+
+        try:
+            t.fn()
+            t.done = True
+        except Exception:
+            t.done = False
+
+        spin_i = 0
+        while time.monotonic() - t0 < 0.18:
+            spin = DOTS[spin_i % len(DOTS)]
+            line = (
+                f"  {C.SLATE}{i+1:>2}/{len(tasks)}{C.RESET}  "
+                f"{col}{tag:<9}{C.RESET}  "
+                f"{C.WHITE}{t.name:<{name_pad}}{C.RESET}  "
+                f"{C.SKY}{spin}{C.RESET}"
+            )
+            sys.stdout.write("\r" + line)
+            sys.stdout.flush()
+            spin_i += 1
+            time.sleep(0.04)
+
+        mark = f"{C.MINT}{SYM_OK}{C.RESET}" if t.done else f"{C.CORAL}{SYM_FAIL}{C.RESET}"
+        line = (
+            f"  {C.SLATE}{i+1:>2}/{len(tasks)}{C.RESET}  "
+            f"{col}{tag:<9}{C.RESET}  "
+            f"{C.WHITE}{t.name:<{name_pad}}{C.RESET}  "
+            f"{mark}"
+        )
+        sys.stdout.write("\r" + line + "   \n")
+        sys.stdout.flush()
+
+    show()
+
+
+def render_report(tasks):
+    w = term_width()
+    ok = sum(1 for t in tasks if t.done)
+    fail = len(tasks) - ok
+    pct = int(ok / len(tasks) * 100) if tasks else 0
+
+    bar_w = min(50, w - 20)
+    filled = int(pct / 100 * bar_w)
+    bar = "█" * filled + "░" * (bar_w - filled)
+
+    print()
+    print("  " + C.COAL + "─" * (w - 4) + C.RESET)
+    print()
+    print(f"  {C.SLATE}success rate{C.RESET}")
+    print(f"  {C.MINT}{bar}{C.RESET}  {C.BOLD}{C.WHITE}{pct}%{C.RESET}")
+    print()
+    print(f"  {C.MINT}{SYM_DOT}{C.RESET} {C.SLATE}passed  {C.RESET} {C.BOLD}{C.WHITE}{ok}{C.RESET}")
+    print(f"  {C.CORAL}{SYM_DOT}{C.RESET} {C.SLATE}failed  {C.RESET} {C.BOLD}{C.WHITE}{fail}{C.RESET}")
+    print(f"  {C.SKY}{SYM_DOT}{C.RESET} {C.SLATE}total   {C.RESET} {C.BOLD}{C.WHITE}{len(tasks)}{C.RESET}")
+    print()
+
+
+def run_pipeline():
+    tasks = make_tasks()
+    render_runner(tasks)
+    render_report(tasks)
+    wait()
+
+
+def wait(msg="back"):
+    print(f"  {C.GRAY}{SYM_ARROW} ENTER {msg}{C.RESET}", end="")
+    try:
+        input()
+    except (KeyboardInterrupt, EOFError):
+        pass
 
 
 def main():
-    if not is_admin():
-        log("This script requires administrative privileges. Please run it as an administrator.")
-        input("Press Enter to exit...")
-        sys.exit(1)
-    menu()
+    try:
+        boot()
+    except (KeyboardInterrupt, EOFError):
+        show()
+        return
+
+    require_admin()
+
+    while True:
+        dashboard()
+        try:
+            ch = input(f"  {C.BOLD}{C.SKY}{SYM_ARROW} {C.RESET}").strip()
+        except (KeyboardInterrupt, EOFError):
+            print()
+            break
+
+        if ch == "1":
+            run_pipeline()
+        elif ch == "2" or ch.lower() in ("q", "exit"):
+            clear()
+            print()
+            typewriter("shutting down dashboard…", C.CORAL, delay=0.012)
+            time.sleep(0.2)
+            print(f"\n  {C.GRAY}⌥ {C.SKY}{GITHUB}{C.RESET}\n")
+            break
+        else:
+            print(f"  {C.CORAL}{SYM_FAIL} invalid choice{C.RESET}")
+            time.sleep(0.6)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        show()
+        print(f"\n\n  {C.TEAL_LT}cancelled.{C.RESET}\n")
